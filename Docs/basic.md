@@ -53,7 +53,7 @@ Basic general concepts to work with.
 ## Command line
 
 - Exit command line: `q`.
-- [Redirect messages from command prompt](https://support.microsoft.com/en-us/help/110930/redirecting-error-messages-from-command-prompt-stderr-stdout):
+- [Redirect messages from command prompt (Windows)](https://support.microsoft.com/en-us/help/110930/redirecting-error-messages-from-command-prompt-stderr-stdout):
 
 <!-- markdownlint-disable MD033 -->
 
@@ -214,29 +214,47 @@ Use `.` as `<path>` to indicate the current path.
 
 ## Git
 
-### Basic Git operations
-
-| Action                                                                                        | Instruction                                               | Example                                            |
-| --------------------------------------------------------------------------------------------- | --------------------------------------------------------- | -------------------------------------------------- |
-| Clone a repository.                                                                           | `git clone <url>`                                         | `git clone https://github.com/Clepa/Knowledge.git` |
-| Create a branch.                                                                              | `git branch <name>`                                       | `git branch aaa`                                   |
-| Switch to branch.                                                                             | `git checkout <name>`                                     | `git checkout aaa`                                 |
-| Create and switch to branch.                                                                  | `git checkout -b <name>`                                  | `git checkout -b aaa`                              |
-| List branches: `-l` for local and `-r` for remote.                                            | `git branch -l`, `git branch -r`                          |                                                    |
-| Delete local branches: `-D` for `--delete --force`.                                           | `git branch -d <names>`                                   | `git branch -d aaa bbb`                            |
-| Delete remote branches.                                                                       | `git push -d <remote> <names>`                            | `git push -d origin aaa bbb`                       |
-| Push multiple branches and add tracking reference.                                            | `git push -u <remote> <names>`                            | `git push -u origin aaa bbb`                       |
-| [Push all branches at once and add tracking reference](https://stackoverflow.com/a/14541136). | `git push -u --all <remote>`                              | `git push -u --all origin`                         |
-| [Search text in commits](https://stackoverflow.com/a/5816177).                                | `git log -p --source --all -S "<text>"`                   | `git log -p --source --all -S "nowledge"`          |
-| ^                                                                                             | `git log -p --source --all -G "<regex>"`                  | `git log -p --source --all -G "^.*now.*dg.*$"`     |
-| Show the last edition of the indicated lines.                                                 | `git blame -L <start_line>,+<add> <file>`                 | `git blame -L 1,+10 foo.txt`                       |
-| Show all the history of the indicated lines.                                                  | `git log --pretty=short -u -L <start_line>,+<add>:<file>` | `git log --pretty=short -u -L 12,+11:foo.txt`      |
-| [Ignored files](https://stackoverflow.com/a/467053): _MINGW64 needed for #2 instruction._     | `git status --ignored`                                    |                                                    |
-| ^                                                                                             | `git check-ignore -v $(find . -type f -print)`            |                                                    |
-
 - Show Git configuration options: `git config -l --show-origin`.
 
-<!-- TODO: add how to delete multiple branches local/remote -->
+### Basic Git operations
+
+<!-- TODO: add how to delete multiple branches local/remote: work -->
+
+| Action                                                                                                      | Instruction                                                              | Example                                            |
+| ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | -------------------------------------------------- |
+| Clone a repository.                                                                                         | `git clone <url>`                                                        | `git clone https://github.com/Clepa/Knowledge.git` |
+| Create a branch.                                                                                            | `git branch <name>`                                                      | `git branch aaa`                                   |
+| Switch to branch.                                                                                           | `git checkout <name>`                                                    | `git checkout aaa`                                 |
+| Create and switch to branch.                                                                                | `git checkout -b <name>`                                                 | `git checkout -b aaa`                              |
+| Push multiple branches and add tracking reference.                                                          | `git push -u <remote> <names>`                                           | `git push -u origin aaa bbb`                       |
+| [Push all branches at once and add tracking reference](https://stackoverflow.com/a/14541136).               | `git push -u --all <remote>`                                             | `git push -u --all origin`                         |
+| Interactive rebase                                                                                          | `git reabse -i`                                                          |                                                    |
+| Add one commit to current branch.                                                                           | `git cherry-pick <hash>`                                                 | `git cherry-pick 28e9c5869caa5ea5ab`               |
+| Add range of commits to current branch, [hashes can be branch names](https://stackoverflow.com/a/35437643). | `git cherry-pick <hash_older>..<hash_newer>` (`hash_older` not included) | `git cherry-pick 07e1ccf0..01a92458`               |
+| ^                                                                                                           | `git cherry-pick <hash_older>^..<hash_newer>` (`hash_older` included)    | `git cherry-pick 07e1ccf0..01a92458`               |
+| Delete local branches: `-D` for `--delete --force`.                                                         | `git branch -d <names>`                                                  | `git branch -d aaa bbb`                            |
+| Delete remote branches.                                                                                     | `git push -d <remote> <names>`                                           | `git push -d origin aaa bbb`                       |
+| List branches: `-l` for local and `-r` for remote.                                                          | `git branch -l`, `git branch -r`                                         |                                                    |
+| [Search text in commits](https://stackoverflow.com/a/5816177).                                              | `git log -p --source --all -S "<text>"`                                  | `git log -p --source --all -S "nowledge"`          |
+| ^                                                                                                           | `git log -p --source --all -G "<regex>"`                                 | `git log -p --source --all -G "^.*now.*dg.*$"`     |
+| Show the last edition of the indicated lines.                                                               | `git blame -L <start_line>,+<add> <file>`                                | `git blame -L 1,+10 foo.txt`                       |
+| Show all the history of the indicated lines.                                                                | `git log --pretty=short -u -L <start_line>,+<add>:<file>`                | `git log --pretty=short -u -L 12,+11:foo.txt`      |
+| [Ignored files](https://stackoverflow.com/a/467053): _MINGW64 needed for #2 instruction._                   | `git status --ignored`                                                   |                                                    |
+| ^                                                                                                           | `git check-ignore -v $(find . -type f -print)`                           |                                                    |
+
+<!--
+	Interactive rebase
+		Basic
+			git rebase -i
+		With other branch as base
+			git rebase -i <branch> # branch=origin/master
+		From specific hash
+			git rebase -i <hash>
+		For all the commits
+			git rebase -i --root
+    For the last N commits
+      git rebase -i HEAD~n
+ -->
 
 [More information](https://git-scm.com/docs/pretty-formats) for `--prettier` used in `git log`: `--pretty="%Cblue%h"`, `--pretty=short`.
 
@@ -417,6 +435,8 @@ Version `1.x`:
 <!--
 PENDING
 -------
+Markdown
+  https://github.com/github/linguist/blob/master/lib/linguist/languages.yml
 Windows
 	W10
 		Disable 'Alt+Shift' to change language
@@ -430,17 +450,6 @@ Windows
 		Open Task Manager > Right click on columns > Add 'Command line'
 
 Git
-	Interactive rebase
-		Basic
-			git rebase -i
-		With other branch as base
-			git rebase -i <branch> # branch=origin/master
-		From specific hash
-			git rebase -i <hash>
-		For all the commits
-			git rebase -i --root
-    For the last N commits
-      git rebase -i HEAD~n
 	Update authored commit time to now
 		git commit --amend --date=now // Requires updated Git version
       https://stackoverflow.com/questions/9110310/update-git-commit-author-date-when-amending
