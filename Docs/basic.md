@@ -20,8 +20,12 @@ Basic general concepts to work with.
 - [Coding](#coding)
   - [Prettier](#prettier)
   - [Angular](#angular)
+    - [Testing](#testing)
+      - [Karma](#karma)
+    - [Code samples](#code-samples)
+  - [HTML](#html)
   - [Cypress](#cypress)
-  - [Spring Boot](#spring-boot)
+  - [Spring Boot (Spring)](#spring-boot-spring)
   - [Database](#database)
 - [Package managers](#package-managers)
   - [Maven](#maven)
@@ -35,6 +39,7 @@ Basic general concepts to work with.
     - [Debug](#debug)
 - [Others](#others)
   - [YAML](#yaml)
+  - [CORS](#cors)
 
 ## Windows
 
@@ -46,7 +51,9 @@ Basic general concepts to work with.
   taskkill /F /PID <PID>
   ```
 
-- Environment variables: `Control Panel\All Control Panel Items\User Accounts`.
+- Environment variables:
+  - `Win` + `R` > CMD > `rundll32.exe sysdm.cpl,EditEnvironmentVariables`
+  - File explorer > `Control Panel\All Control Panel Items\User Accounts`.
 - Credential Manager: `Control Panel\All Control Panel Items\Credential Manager`.
 <!-- Panel de control\Todos los elementos de Panel de control\Administrador de credenciales -->
 
@@ -319,7 +326,7 @@ Template: `base..compare` and `base...compare`. Differences between double and t
 ### Angular
 
 - ❗ [npx](https://github.com/zkat/npx): executes `<command>` either from a local `node_modules/.bin`, or from a central cache, installing any packages needed in order for `<command>` to run, e.g. `npx cowsay "Hello World"`. ❗
-- For problems deleting `node_modules` due long folder names use rimraf, [1](http://www.nikola-breznjak.com/blog/nodejs/how-to-delete-node_modules-folder-on-windows-machine/), [2](https://stackoverflow.com/a/29685530):
+- For problems deleting `node_modules` due long folder names or others, use rimraf, [1](http://www.nikola-breznjak.com/blog/nodejs/how-to-delete-node_modules-folder-on-windows-machine/), [2](https://stackoverflow.com/a/29685530):
 
   ```batch
   npx rimraf <path_node_modules>
@@ -328,13 +335,97 @@ Template: `base..compare` and `base...compare`. Differences between double and t
   rimraf <path_node_modules>
   ```
 
-- Elements order HTML tag: `#<id>`, `id=<value>`, `form[Group|Control]Name`, `*ng<op>`, directives, component properties: input followed by output, css styling, others (translations,...), `data-testid`.
+- [Local package dependency](https://stackoverflow.com/a/14387210): `"bar": "file:../foo/bar"`.
+- Run in a different port: add `--port=<#port>`, e.g., `npm run start:<environment> --port=4201` (environment is optional). In a `package.json`: `"start:local": "ng serve --configuration=local --port=4201"`.
+- Elements order HTML tag: `#<id>`, `id=<value>`, `form[Group|Control]Name`, `*ng<op>`, directives, component properties: input followed by output, css styling, others (translations, etc.), `data-testid`.
+
+#### Testing
+
+- Run tests: `ng test --watch --code-coverage`.
+  - `watch`: run build when files change and the tests are run again.
+  - `code-coverage`: generates the code coverage.
+- `fixture.<elem>` VS `fixture.debugElement.<elem>` ([ref](https://stackoverflow.com/a/37705848)):
+  - `fixture.componentInstance == fixture.debugElement.componentInstance`.
+  - `fixture.nativeElement == fixture.debugElement.nativeElement`.
+
+Resources:
+
+- [Angular Jasmine](https://programmingcroatia.com/2017/09/22/angular-2-jasmine-testing/).
+- [How to get CSS values in JavaScript](https://zellwk.com/blog/css-values-in-js/).
+- [Test directives](https://codecraft.tv/courses/angular/unit-testing/directives/).
+- [Mock component](https://stackoverflow.com/a/41240198).
+
+##### Karma
+
+- Example configuration file:
+
+  ```js
+  // karma.conf.js
+  module.exports = function (config) {
+    config.set({
+      // ...
+      // Reporters.
+      reporters: ["mocha", "kjhtml"],
+      // Run tests sequentially.
+      jasmine: { random: false },
+      // Default 'watch' mode when running tests.
+      singleRun: false,
+      flags: [
+        /* "--headless", */ "--disable-gpu",
+        "--remote-debugging-port=9222",
+      ],
+    });
+  };
+  ```
+
+- [Reporters](https://stackoverflow.com/q/46340997):
+  - **mocha**: change the console output. Show the run suites with tests.
+  - **kjhtml**: add more information to the browser, `localhost:9876`. If we go to debug, `http://localhost:9876/debug.html?spec=`, we can run by suite or test.
+
+#### Code samples
+
+- Async actions of array elements:
+
+  ```typescript
+  let counter = exceptions.length;
+  const resolve = () => {
+    counter--;
+    if (counter === 0) {
+      this.reset();
+    }
+  };
+
+  exceptions.forEach((exception) => {
+    this.exceptionsService
+      .createOneObject(exception)
+      .toPromise()
+      .then((_) => resolve())
+      .catch((_) => resolve());
+  });
+  ```
+
+- Generate range of numbers:
+
+  ```typescript
+  return Array.from({ length: end - start }, (v, k) => k + start);
+  ```
+
+- [Interceptors](https://indepth.dev/posts/1051/top-10-ways-to-use-interceptors-in-angular).
+
+### HTML
+
+- [New line and tabs in HTML](https://stackoverflow.com/a/45178556):
+
+  ```css
+  white-space: pre-line; /* New line: \n */
+  white-space: pre-wrap; /* Tabs: \t */
+  ```
 
 ### Cypress
 
 - Go to project with it installed, `node_modules\.bin`, and run: `npx cypress open`.
 
-### Spring Boot
+### Spring Boot (Spring)
 
 - Quick application restarts: [Hot Swapping](https://docs.spring.io/spring-boot/docs/current/reference/html/using-spring-boot.html#using-boot-hot-swapping) and [Developer Tools](https://docs.spring.io/spring-boot/docs/current/reference/html/using-spring-boot.html#using-boot-devtools).
 
@@ -345,6 +436,25 @@ Template: `base..compare` and `base...compare`. Differences between double and t
     <optional>true</optional>
   </dependency>
   ```
+
+- [Configure log level](https://docs.spring.io/spring-boot/docs/2.1.1.RELEASE/reference/html/boot-features-logging.html):
+
+  ```properties
+  # logging.level.<logger-name>=<level>.
+  # logger-name=root, change the logging level for all packages.
+  # level=FATAL > ERROR > WARN > INFO > DEBUG > TRACE, or OFF
+  logging.level.root=WARN
+  logging.level.org.springframework.web=DEBUG
+  logging.level.org.hibernate=ERROR
+  ```
+
+- [Show/hide endpoint(s)](https://www.baeldung.com/spring-swagger-hiding-endpoints): add `@ApiIgnore` to the interface, controller or class.
+
+- Test [clean context](https://www.baeldung.com/spring-dirtiescontext):
+  - Class level: `@DirtiesContext(classMode = ClassMode.AFTER_CLASS)`.
+    - Options: `BEFORE_CLASS`, `BEFORE_EACH_TEST_METHOD`, `AFTER_EACH_TEST_METHOD` or `AFTER_CLASS`.
+  - Method level: `@DirtiesContext(methodMode = MethodMode.AFTER_METHOD)`.
+    - Options: `BEFORE_METHOD` or `AFTER_METHOD`.
 
 ### Database
 
@@ -361,6 +471,10 @@ Template: `base..compare` and `base...compare`. Differences between double and t
 
 ## Package managers
 
+If you have some troubles with installing packages or modules, remove the repository folder: `node_modules`, `.m2`, or personalized name.
+
+<!-- TODO: for NPM and Yarn, commands to install packages globally or to the project (adding or not to package.json). -->
+
 ### Maven
 
 - Run with specific `settings.xml`: `mvn -s <path> <command>` -> `mvn -s C:\config\settings.xml compile`
@@ -368,13 +482,23 @@ Template: `base..compare` and `base...compare`. Differences between double and t
 ### NPM
 
 - Show active configuration: `npm config list`.
-- Install packages and print logs: `npm install --verbose`.
+- Install modules listed in `package.json` and print logs: `npm install --verbose`.
+- [Show dependency tree](https://stackoverflow.com/questions/25997519/how-to-view-the-dependency-tree-of-a-given-npm-module): `npm list`.
+- Show module data (not for the project): `npm view <package>`.
+
+<!-- TODO: check NPM command for this: - Force to install updated versions: remove `package-lock.json`. -->
+
+Starting at version `7.x`:
+
+- Show _why_ a module is installed: `npm explain <module>` (or `why`).
 <!-- TODO: add dependencies tree command. -->
 
 ### Yarn
 
-- Show configuration variables: `yarn config list`.
-- Install and print logs: `yarn install --verbose`.
+- Show active configuration: `yarn config list`.
+- Install modules listed in `package.json` and print logs: `yarn install --verbose`.
+- Show dependency tree: `yarn list`.
+- Show _why_ a module is installed: `yarn why <module>`.
 - Config global variables:
 
   ```bash
@@ -393,6 +517,8 @@ Version `1.x`:
 | [Global cache downloaded packages](https://classic.yarnpkg.com/en/docs/cli/cache/).                                  | `yarn config set cache-folder <path>`  | `yarn cache dir`  |
 
 ⚠️ For `global dir` exists an [issue](https://github.com/yarnpkg/yarn/issues/5637): open your `.yarnrc` file, find `global-folder` and replace with `--global-folder`. ⚠️
+
+<!-- TODO: add "--link-folder" "<path>" -->
 
 ## Browsers
 
@@ -426,6 +552,15 @@ Version `1.x`:
   - [To Quote or not to Quote](http://blogs.perl.org/users/tinita/2018/03/strings-in-yaml---to-quote-or-not-to-quote.html), [Do I need quotes for strings?](https://stackoverflow.com/a/22235064).
   - [Multiline strings, `>-`](https://stackoverflow.com/a/21699210).
 
+### CORS
+
+- [CORS error](https://daveceddia.com/access-control-allow-origin-cors-errors-in-react-express/).
+- Chrome no CORS: create new shortcut with `target="<installation_folder>\Application\chrome.exe" --disable-web-security --disable-gpu --user-data-dir="<tmp_folder>\Chrome"`.
+  - Example: `target="C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" --disable-web-security --disable-gpu --user-data-dir="C:\tmp\Chrome"`.
+  - `user-data-dir` must be different from the current one.
+  - Close all the Chrome instances and open the new shortcut. A warning message should appear.
+  - ⚠️ Do not use this for normal navigation. ⚠️
+
 <!-- markdownlint-disable MD003 -->
 <!-- markdownlint-disable MD010 -->
 <!-- markdownlint-disable MD022 -->
@@ -455,4 +590,7 @@ Git
       https://stackoverflow.com/questions/9110310/update-git-commit-author-date-when-amending
 [How to fetch all git branches](https://stackoverflow.com/questions/10312521/how-to-fetch-all-git-branches)
 [Linking a pull request to an issue](https://docs.github.com/en/free-pro-team@latest/github/managing-your-work-on-github/linking-a-pull-request-to-an-issue).
+
+Others
+  Path vs folder: https://unix.stackexchange.com/questions/131561/what-is-the-difference-between-path-and-directory/131585
 -->
