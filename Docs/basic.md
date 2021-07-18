@@ -12,7 +12,10 @@ Basic general concepts to work with.
   - [Bash](#bash)
   - [PowerShell](#powershell)
 - [Git](#git)
-  - [Basic Git operations](#basic-git-operations)
+  - [Basic operations](#basic-operations)
+  - [Complex actions](#complex-actions)
+    - [Interactive rebase](#interactive-rebase)
+    - [Return to previous moment](#return-to-previous-moment)
   - [Multiple repositories to a mono repo](#multiple-repositories-to-a-mono-repo)
   - [Errors and problems](#errors-and-problems)
   - [GitHub](#github)
@@ -23,6 +26,9 @@ Basic general concepts to work with.
     - [Testing](#testing)
       - [Karma](#karma)
     - [Code samples](#code-samples)
+  - [Java](#java)
+    - [Jackson (JSON)](#jackson-json)
+      - [Mixins](#mixins)
   - [HTML](#html)
   - [Cypress](#cypress)
   - [Spring Boot (Spring)](#spring-boot-spring)
@@ -34,12 +40,14 @@ Basic general concepts to work with.
 - [Browsers](#browsers)
   - [Chrome](#chrome)
   - [Edge](#edge)
+  - [Internet Explorer](#internet-explorer)
 - [Tools](#tools)
   - [IntelliJ](#intellij)
     - [Debug](#debug)
 - [Others](#others)
   - [YAML](#yaml)
   - [CORS](#cors)
+  - [Unclassified topics](#unclassified-topics)
 
 ## Windows
 
@@ -88,6 +96,7 @@ Basic general concepts to work with.
     - `/q`: specifies quiet mode. Does not prompt for confirmation when deleting a directory tree. The `/q` parameter works only if `/s` is also specified.
   - [Add context menu option](https://pureinfotech.com/delete-large-folder-fast-windows-10/).
   - [Rimraf](https://github.com/isaacs/rimraf): it is a cross-platform solution but requires a Node.js package installation.
+  - Convert local network path (UNC) to a temporary drive (command extensions should be enabled,): `pushd <path>`. Use `popd` to remove the latest pushed path.
 
 Use `.` as `<path>` to indicate the current path.
 
@@ -221,9 +230,29 @@ Use `.` as `<path>` to indicate the current path.
 
 ## Git
 
+<!--
+		Detach forked repo
+			https://stackoverflow.com/a/28147138
+		Squash without rebase
+			https://gist.github.com/n00neimp0rtant/9515611
+			https://blog.oddbit.com/post/2019-06-17-avoid-rebase-hell-squashing-wi/
+		Merge
+			TEST SOLUTION: https://stackoverflow.com/a/29695610
+				Alright, I've figured it out. The subtree switch for first merge needs to look like this: subtree=dist origin/dev while subsequent merges need to look like this: subtree=dist dev. Not sure exactly why this is but it's working.
+			https://stackoverflow.com/a/60774244
+			https://git-scm.com/docs/git-merge
+			Add the itmp repository and execute:
+				# branch: itmp/master
+				git merge <branch> --no-commit --no-ff # git merge --no-ff --no-commit <branch>
+					OR
+				git merge --squash <branch>
+ -->
+
+- [Oh Shit, Git!?!](https://ohshitgit.com/).
+- [How to undo (almost) anything with Git](https://github.blog/2015-06-08-how-to-undo-almost-anything-with-git).
 - Show Git configuration options: `git config -l --show-origin`.
 
-### Basic Git operations
+### Basic operations
 
 <!-- TODO: add how to delete multiple branches local/remote: work -->
 
@@ -235,10 +264,9 @@ Use `.` as `<path>` to indicate the current path.
 | Create and switch to branch.                                                                                | `git checkout -b <name>`                                                 | `git checkout -b aaa`                              |
 | Push multiple branches and add tracking reference.                                                          | `git push -u <remote> <names>`                                           | `git push -u origin aaa bbb`                       |
 | [Push all branches at once and add tracking reference](https://stackoverflow.com/a/14541136).               | `git push -u --all <remote>`                                             | `git push -u --all origin`                         |
-| Interactive rebase                                                                                          | `git reabse -i`                                                          |                                                    |
 | Add one commit to current branch.                                                                           | `git cherry-pick <hash>`                                                 | `git cherry-pick 28e9c5869caa5ea5ab`               |
 | Add range of commits to current branch, [hashes can be branch names](https://stackoverflow.com/a/35437643). | `git cherry-pick <hash_older>..<hash_newer>` (`hash_older` not included) | `git cherry-pick 07e1ccf0..01a92458`               |
-| ^                                                                                                           | `git cherry-pick <hash_older>^..<hash_newer>` (`hash_older` included)    | `git cherry-pick 07e1ccf0..01a92458`               |
+| ^                                                                                                           | `git cherry-pick <hash_older>^..<hash_newer>` (`hash_older` included)    | `git cherry-pick 07e1ccf0^..01a92458`              |
 | Delete local branches: `-D` for `--delete --force`.                                                         | `git branch -d <names>`                                                  | `git branch -d aaa bbb`                            |
 | Delete remote branches.                                                                                     | `git push -d <remote> <names>`                                           | `git push -d origin aaa bbb`                       |
 | List branches: `-l` for local and `-r` for remote.                                                          | `git branch -l`, `git branch -r`                                         |                                                    |
@@ -249,20 +277,6 @@ Use `.` as `<path>` to indicate the current path.
 | [Ignored files](https://stackoverflow.com/a/467053): _MINGW64 needed for #2 instruction._                   | `git status --ignored`                                                   |                                                    |
 | ^                                                                                                           | `git check-ignore -v $(find . -type f -print)`                           |                                                    |
 
-<!--
-	Interactive rebase
-		Basic
-			git rebase -i
-		With other branch as base
-			git rebase -i <branch> # branch=origin/master
-		From specific hash
-			git rebase -i <hash>
-		For all the commits
-			git rebase -i --root
-    For the last N commits
-      git rebase -i HEAD~n
- -->
-
 [More information](https://git-scm.com/docs/pretty-formats) for `--prettier` used in `git log`: `--pretty="%Cblue%h"`, `--pretty=short`.
 
 [More information about history file modifications](https://stackoverflow.com/questions/8435343/retrieve-the-commit-log-for-a-specific-line-in-a-file).
@@ -270,6 +284,27 @@ Use `.` as `<path>` to indicate the current path.
 <!-- Errors/problems:
 https://github.com/microsoft/Git-Credential-Manager-for-Windows/issues/56
  -->
+
+### Complex actions
+
+#### Interactive rebase
+
+- With other branch as base: `git rebase -i <base_branch>` - `git rebase -i origin/master`.
+- From specific hash: `git rebase -i <hash>` - `git rebase -i 07e1ccf0`.
+- For all the commits: `git rebase -i --root`.
+- For the last N commits: `git rebase -i HEAD~N` - `git rebase -i HEAD~11`.
+- For all the commits created in the current branch:
+  - Bash:
+    - Option 1, using hash: `git rebase -i $(git merge-base <base_branch> <current_branch>)` - `git rebase -i $(git merge-base origin/master aaa)`.
+    - Option 2, using N commits: `git rebase -i HEAD~$(git rev-list --count <base_branch>..)` - `git rebase -i HEAD~$(git rev-list --count origin/master..)`.
+  - CMD: `` for /F "usebackq delims=" %A in (`git merge-base <base_branch> <current_branch>`) do git rebase -i %A `` - `` for /F "usebackq delims=" %A in (`git merge-base origin/master aaa`) do git rebase -i %A ``.
+
+#### Return to previous moment
+
+Steps:
+
+- Show actions history and check the index you want to move to: `git reflog`.
+- Return to previous history index: `git reset HEAD@{index}` - `git reset HEAD@{11}`.
 
 ### Multiple repositories to a mono repo
 
@@ -315,6 +350,11 @@ Template: `base..compare` and `base...compare`. Differences between double and t
 <!-- prettier-ignore-end -->
 
 ## Coding
+
+Useful tools:
+
+- Test and simplify logical expressions: [WolframAlpha](https://www.wolframalpha.com/input/?i=%28a+%7C%7C+b%29+%26%26+%28%21a+%7C%7C+b%29) or [dcode](https://www.dcode.fr/boolean-expressions-calculator). <!-- (a || b) && (!a || b) -->
+- [Create LaTeX, HTML, text and Markdown tables graphically](https://www.tablesgenerator.com/).
 
 ### Prettier
 
@@ -411,6 +451,54 @@ Resources:
   ```
 
 - [Interceptors](https://indepth.dev/posts/1051/top-10-ways-to-use-interceptors-in-angular).
+
+### Java
+
+#### Jackson (JSON)
+
+- [Basic Jackson annotations](https://www.baeldung.com/jackson-annotations).
+- Configure enums to serialize and deserialize using `toString()`:
+
+  ```java
+  ObjectMapper mapper = new ObjectMapper();
+  mapper.enable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING);
+  mapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
+  ```
+
+##### Mixins
+
+- [Jackson 1.2: use Mix-In Annotations to reuse, decouple](http://www.cowtowncoder.com/blog/archives/2009/08/entry_305.html).
+- [Jackson - custom serializer that overrides only specific fields](https://stackoverflow.com/questions/15378853/jackson-custom-serializer-that-overrides-only-specific-fields/55532233#55532233).
+
+Basic example code:
+
+```java
+// Mapper configuration.
+ObjectMapper mapper = new ObjectMapper();
+SimpleModule simpleModule = new SimpleModule();
+simpleModule.setMixInAnnotation(Student.class, StudentMixin.class);
+mapper.registerModule(simpleModule); // Or mapper.addMixIn(Student.class, StudentMixin.class).
+
+// StudentMixin.java.
+public abstract class StudentMixin { // Overrides only one of the Student properties.
+  @JsonSerialize(using = StudentIdSerializer.class)
+  public String id;
+}
+
+// StudentIdSerializer.java.
+public class StudentIdSerializer extends JsonSerializer<Integer> {
+  @Override
+  public void serialize(Integer integer, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+    jsonGenerator.writeString(String.valueOf(integer * 2));
+  }
+}
+
+// How to use.
+ObjectMapper mapper = new ObjectMapper();
+P src = new P();
+String data = mapper.writeValueAsString(src);
+T obj = mapper.readValue(data, T.class);
+```
 
 ### HTML
 
@@ -531,6 +619,13 @@ Version `1.x`:
 
 - Developer Tools is not working: `PowerShell > Add-AppxPackage -register "C:\Windows\SystemApps\Microsoft.MicrosoftEdgeDevToolsClient_8wekyb3d8bbwe\AppxManifest.xml" -DisableDevelopmentMode -Confirm:$false`.
 
+### Internet Explorer
+
+Known issues in compatibility mode:
+
+- [IE10 renders in IE7 mode. How to force Standards mode?](https://stackoverflow.com/a/13287226).
+- [Issue with `document.createEvent()` on IE11](https://stackoverflow.com/q/39146772).
+
 ## Tools
 
 ### IntelliJ
@@ -560,6 +655,15 @@ Version `1.x`:
   - `user-data-dir` must be different from the current one.
   - Close all the Chrome instances and open the new shortcut. A warning message should appear.
   - ⚠️ Do not use this for normal navigation. ⚠️
+
+### Unclassified topics
+
+- Edit PDF comments and information:
+  - Export comments as `FDF`.
+  - Edit the exported file:
+    - Creation date: `/CreationDate\(D:.+\)/F -> /CreationDate\(D:20190811000000+02'00'\)/F`.
+    - Modification date: `/M\(D:.+\)/NM -> /M\(D:20190811000000+02'00'\)/NM`.
+- [Confluence - How can I escape curly braces within {code} tags?](https://community.atlassian.com/t5/Confluence-questions/How-can-I-escape-curly-braces-within-code-tags/qaq-p/29147).
 
 <!-- markdownlint-disable MD003 -->
 <!-- markdownlint-disable MD010 -->
