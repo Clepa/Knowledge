@@ -21,17 +21,20 @@ Basic general concepts to work with.
   - [GitHub](#github)
     - [Compare commits](#compare-commits)
 - [Coding](#coding)
-  - [Prettier](#prettier)
+  - [Java](#java)
+    - [Spring Boot (Spring)](#spring-boot-spring)
+    - [Jackson (JSON)](#jackson-json)
+      - [Mixins](#mixins)
+    - [JUnit](#junit)
+    - [Logging](#logging)
+  - [JavaScript](#javascript)
   - [Angular](#angular)
     - [Testing](#testing)
       - [Karma](#karma)
     - [Code samples](#code-samples)
-  - [Java](#java)
-    - [Jackson (JSON)](#jackson-json)
-      - [Mixins](#mixins)
   - [HTML](#html)
   - [Cypress](#cypress)
-  - [Spring Boot (Spring)](#spring-boot-spring)
+  - [Prettier](#prettier)
   - [Database](#database)
 - [Package managers](#package-managers)
   - [Maven](#maven)
@@ -45,8 +48,13 @@ Basic general concepts to work with.
   - [IntelliJ](#intellij)
     - [Debug](#debug)
 - [Others](#others)
+  - [Postman](#postman)
+    - [Request encoding type: x-www-form-urlencoded](#request-encoding-type-x-www-form-urlencoded)
+    - [Reference other request on pre-request script](#reference-other-request-on-pre-request-script)
+  - [ConEmu](#conemu)
   - [YAML](#yaml)
   - [CORS](#cors)
+  - [Regex](#regex)
   - [Unclassified topics](#unclassified-topics)
 
 ## Windows
@@ -250,7 +258,6 @@ Use `.` as `<path>` to indicate the current path.
 
 - [Oh Shit, Git!?!](https://ohshitgit.com/).
 - [How to undo (almost) anything with Git](https://github.blog/2015-06-08-how-to-undo-almost-anything-with-git).
-- Show Git configuration options: `git config -l --show-origin`.
 
 ### Basic operations
 
@@ -258,6 +265,7 @@ Use `.` as `<path>` to indicate the current path.
 
 | Action                                                                                                      | Instruction                                                              | Example                                            |
 | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | -------------------------------------------------- |
+| Show Git configuration options.                                                                             | `git config -l --show-origin`                                            |                                                    |
 | Clone a repository.                                                                                         | `git clone <url>`                                                        | `git clone https://github.com/Clepa/Knowledge.git` |
 | Create a branch.                                                                                            | `git branch <name>`                                                      | `git branch aaa`                                   |
 | Switch to branch.                                                                                           | `git checkout <name>`                                                    | `git checkout aaa`                                 |
@@ -356,12 +364,115 @@ Useful tools:
 - Test and simplify logical expressions: [WolframAlpha](https://www.wolframalpha.com/input/?i=%28a+%7C%7C+b%29+%26%26+%28%21a+%7C%7C+b%29) or [dcode](https://www.dcode.fr/boolean-expressions-calculator). <!-- (a || b) && (!a || b) -->
 - [Create LaTeX, HTML, text and Markdown tables graphically](https://www.tablesgenerator.com/).
 
-### Prettier
+### Java
 
-- [Add `npm` script to prettify the code easily](https://stackoverflow.com/a/57629631):
-  - Install prettier: `npm i prettier --save-dev`.
-  - Add the script in `package.json`: `"pretty": "prettier --write <regex>"`, e.g., `"pretty": "prettier --write \"./**/*.{js,jsx,ts,html,scss,json}\""`.
-  - Run: `npm run pretty`.
+#### Spring Boot (Spring)
+
+- Quick application restarts: [Hot Swapping](https://docs.spring.io/spring-boot/docs/current/reference/html/using-spring-boot.html#using-boot-hot-swapping) and [Developer Tools](https://docs.spring.io/spring-boot/docs/current/reference/html/using-spring-boot.html#using-boot-devtools).
+
+  ```xml
+  <dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-devtools</artifactId>
+    <optional>true</optional>
+  </dependency>
+  ```
+
+<!-- TODO: add in an example code and validate if this is the current best solution. -->
+
+- [Catch parameter parsing exception in Spring 3.0 WebMVC](https://stackoverflow.com/a/4955943).
+<!-- TODO: should this be moved to Java Logging? Is this Spring specific? -->
+- [Configure log level](https://docs.spring.io/spring-boot/docs/2.1.1.RELEASE/reference/html/boot-features-logging.html):
+
+  ```properties
+  # logging.level.<logger-name>=<level>.
+  # logger-name=root, change the logging level for all packages.
+  # level=FATAL > ERROR > WARN > INFO > DEBUG > TRACE, or OFF
+  logging.level.root=WARN
+  logging.level.org.springframework.web=DEBUG
+  logging.level.org.hibernate=ERROR
+  ```
+
+- [Show/hide endpoint(s)](https://www.baeldung.com/spring-swagger-hiding-endpoints): add `@ApiIgnore` to the interface, controller or class.
+
+- Test [clean context](https://www.baeldung.com/spring-dirtiescontext):
+  - Class level: `@DirtiesContext(classMode = ClassMode.AFTER_CLASS)`.
+    - Options: `BEFORE_CLASS`, `BEFORE_EACH_TEST_METHOD`, `AFTER_EACH_TEST_METHOD` or `AFTER_CLASS`.
+  - Method level: `@DirtiesContext(methodMode = MethodMode.AFTER_METHOD)`.
+    - Options: `BEFORE_METHOD` or `AFTER_METHOD`.
+
+#### Jackson (JSON)
+
+- [Basic Jackson annotations](https://www.baeldung.com/jackson-annotations).
+- Configure enums to serialize and deserialize using `toString()`:
+
+  ```java
+  ObjectMapper mapper = new ObjectMapper();
+  mapper.enable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING);
+  mapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
+  ```
+
+##### Mixins
+
+- [Jackson 1.2: use Mix-In Annotations to reuse, decouple](http://www.cowtowncoder.com/blog/archives/2009/08/entry_305.html).
+- [Jackson - custom serializer that overrides only specific fields](https://stackoverflow.com/questions/15378853/jackson-custom-serializer-that-overrides-only-specific-fields/55532233#55532233).
+
+Basic example code:
+
+```java
+// Mapper configuration.
+ObjectMapper mapper = new ObjectMapper();
+SimpleModule simpleModule = new SimpleModule();
+simpleModule.setMixInAnnotation(Student.class, StudentMixin.class);
+mapper.registerModule(simpleModule); // Or mapper.addMixIn(Student.class, StudentMixin.class).
+
+// StudentMixin.java.
+public abstract class StudentMixin { // Overrides only one of the Student properties.
+  @JsonSerialize(using = StudentIdSerializer.class)
+  public String id;
+}
+
+// StudentIdSerializer.java.
+public class StudentIdSerializer extends JsonSerializer<Integer> {
+  @Override
+  public void serialize(Integer integer, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+    jsonGenerator.writeString(String.valueOf(integer * 2));
+  }
+}
+
+// How to use.
+ObjectMapper mapper = new ObjectMapper();
+P src = new P();
+String data = mapper.writeValueAsString(src);
+T obj = mapper.readValue(data, T.class);
+```
+
+#### JUnit
+
+<!-- TODO: create example code. -->
+
+- Run tests from different classes together:
+
+  ```java
+  import org.junit.runner.RunWith;
+  import org.junit.runners.Suite;
+  import org.junit.runners.Suite.SuiteClasses;
+
+  @RunWith(Suite.class)
+  @SuiteClasses({A.class, B.class})
+  public class TestSuite {}
+  ```
+
+#### Logging
+
+- [Hibernate](https://thoughts-on-java.org/hibernate-logging-guide/): `org.hibernate.SQL: DEBUG` and `org.hibernate.type: trace`.
+
+<!-- TODO: document how to log specific packages, e.g., Spring Framework using `org.springframework.web.client.RestTemplate: DEBUG`. -->
+
+### JavaScript
+
+- [Bind](https://stackoverflow.com/a/20635010): call a function with a specific `this`.
+- [Compare objects comparison](https://stackoverflow.com/questions/31683075/how-to-do-a-deep-comparison-between-2-objects-with-lodash).
 
 ### Angular
 
@@ -378,6 +489,7 @@ Useful tools:
 - [Local package dependency](https://stackoverflow.com/a/14387210): `"bar": "file:../foo/bar"`.
 - Run in a different port: add `--port=<#port>`, e.g., `npm run start:<environment> --port=4201` (environment is optional). In a `package.json`: `"start:local": "ng serve --configuration=local --port=4201"`.
 - Elements order HTML tag: `#<id>`, `id=<value>`, `form[Group|Control]Name`, `*ng<op>`, directives, component properties: input followed by output, css styling, others (translations, etc.), `data-testid`.
+- [Uncaught ReferenceError: `global` is not defined](https://stackoverflow.com/a/50356546).
 
 #### Testing
 
@@ -452,54 +564,6 @@ Resources:
 
 - [Interceptors](https://indepth.dev/posts/1051/top-10-ways-to-use-interceptors-in-angular).
 
-### Java
-
-#### Jackson (JSON)
-
-- [Basic Jackson annotations](https://www.baeldung.com/jackson-annotations).
-- Configure enums to serialize and deserialize using `toString()`:
-
-  ```java
-  ObjectMapper mapper = new ObjectMapper();
-  mapper.enable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING);
-  mapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
-  ```
-
-##### Mixins
-
-- [Jackson 1.2: use Mix-In Annotations to reuse, decouple](http://www.cowtowncoder.com/blog/archives/2009/08/entry_305.html).
-- [Jackson - custom serializer that overrides only specific fields](https://stackoverflow.com/questions/15378853/jackson-custom-serializer-that-overrides-only-specific-fields/55532233#55532233).
-
-Basic example code:
-
-```java
-// Mapper configuration.
-ObjectMapper mapper = new ObjectMapper();
-SimpleModule simpleModule = new SimpleModule();
-simpleModule.setMixInAnnotation(Student.class, StudentMixin.class);
-mapper.registerModule(simpleModule); // Or mapper.addMixIn(Student.class, StudentMixin.class).
-
-// StudentMixin.java.
-public abstract class StudentMixin { // Overrides only one of the Student properties.
-  @JsonSerialize(using = StudentIdSerializer.class)
-  public String id;
-}
-
-// StudentIdSerializer.java.
-public class StudentIdSerializer extends JsonSerializer<Integer> {
-  @Override
-  public void serialize(Integer integer, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
-    jsonGenerator.writeString(String.valueOf(integer * 2));
-  }
-}
-
-// How to use.
-ObjectMapper mapper = new ObjectMapper();
-P src = new P();
-String data = mapper.writeValueAsString(src);
-T obj = mapper.readValue(data, T.class);
-```
-
 ### HTML
 
 - [New line and tabs in HTML](https://stackoverflow.com/a/45178556):
@@ -513,36 +577,12 @@ T obj = mapper.readValue(data, T.class);
 
 - Go to project with it installed, `node_modules\.bin`, and run: `npx cypress open`.
 
-### Spring Boot (Spring)
+### Prettier
 
-- Quick application restarts: [Hot Swapping](https://docs.spring.io/spring-boot/docs/current/reference/html/using-spring-boot.html#using-boot-hot-swapping) and [Developer Tools](https://docs.spring.io/spring-boot/docs/current/reference/html/using-spring-boot.html#using-boot-devtools).
-
-  ```xml
-  <dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-devtools</artifactId>
-    <optional>true</optional>
-  </dependency>
-  ```
-
-- [Configure log level](https://docs.spring.io/spring-boot/docs/2.1.1.RELEASE/reference/html/boot-features-logging.html):
-
-  ```properties
-  # logging.level.<logger-name>=<level>.
-  # logger-name=root, change the logging level for all packages.
-  # level=FATAL > ERROR > WARN > INFO > DEBUG > TRACE, or OFF
-  logging.level.root=WARN
-  logging.level.org.springframework.web=DEBUG
-  logging.level.org.hibernate=ERROR
-  ```
-
-- [Show/hide endpoint(s)](https://www.baeldung.com/spring-swagger-hiding-endpoints): add `@ApiIgnore` to the interface, controller or class.
-
-- Test [clean context](https://www.baeldung.com/spring-dirtiescontext):
-  - Class level: `@DirtiesContext(classMode = ClassMode.AFTER_CLASS)`.
-    - Options: `BEFORE_CLASS`, `BEFORE_EACH_TEST_METHOD`, `AFTER_EACH_TEST_METHOD` or `AFTER_CLASS`.
-  - Method level: `@DirtiesContext(methodMode = MethodMode.AFTER_METHOD)`.
-    - Options: `BEFORE_METHOD` or `AFTER_METHOD`.
+- [Add `npm` script to prettify the code easily](https://stackoverflow.com/a/57629631):
+  - Install prettier: `npm i prettier --save-dev`.
+  - Add the script in `package.json`: `"pretty": "prettier --write <regex>"`, e.g., `"pretty": "prettier --write \"./**/*.{js,jsx,ts,html,scss,json}\""`.
+  - Run: `npm run pretty`.
 
 ### Database
 
@@ -552,6 +592,8 @@ T obj = mapper.readValue(data, T.class);
 - [Relations](https://softwareengineering.stackexchange.com/questions/345709/erd-many-vs-zero-or-many-one-or-many-crowfoot-notation).
   <!-- prettier-ignore-start -->
   <!-- markdownlint-disable MD033 -->
+
+  <!-- TODO: center image. -->
 
   [<img src="Images/relations.jpg" style="display: block; margin: 0 auto;" width="300"/>](https://softwareengineering.stackexchange.com/q/345709)
   <!-- markdownlint-enable MD033 -->
@@ -637,6 +679,36 @@ Known issues in compatibility mode:
 
 ## Others
 
+### Postman
+
+#### Request encoding type: x-www-form-urlencoded
+
+[Source](https://gist.github.com/madebysid/b57985b0649d3407a7aa9de1bd327990#gistcomment-2747951):
+
+- _If you need to send `x-www-form-urlencoded` data, the `mode` and `object` to generate the request is `urlencoded`_.
+- [Example](https://gist.github.com/madebysid/b57985b0649d3407a7aa9de1bd327990#gistcomment-2196959):
+
+  ```json
+  {
+    "body": {
+      "mode": "urlencoded",
+      "urlencoded": [
+        { "key": "param_a", "value": "value_a" },
+        { "key": "param_b", "value": "value_b" },
+        { "key": "param_c", "value": "value_c" }
+      ]
+    }
+  }
+  ```
+
+#### Reference other request on pre-request script
+
+[Source](https://github.com/postmanlabs/postman-app-support/issues/4193).
+
+### ConEmu
+
+- Select settings location: add to the shortcut the path to settings `xml` file with `-loadcfgfile <path>`, e.g., `-loadcfgfile C:\ConEmu.xml`.
+
 ### YAML
 
 - [Language specifications](https://yaml.org/spec/1.2/spec.html).
@@ -655,6 +727,10 @@ Known issues in compatibility mode:
   - `user-data-dir` must be different from the current one.
   - Close all the Chrome instances and open the new shortcut. A warning message should appear.
   - ⚠️ Do not use this for normal navigation. ⚠️
+
+### Regex
+
+- [Regex for both positive and negative values in dash-separated string](https://stackoverflow.com/a/43207002): `(?:(?<=-)-)?\d+\.\d+`.
 
 ### Unclassified topics
 
